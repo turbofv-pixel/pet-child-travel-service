@@ -32,6 +32,8 @@ npm run dev
 `http://localhost:3000` 에서 확인할 수 있습니다.
 
 오픈API 키가 필요하면 `.env.example`을 복사해 `.env.local`을 만들고 값을 채워주세요.
+`TOUR_API_KEY`를 채우면 `/plan`이 실시간 TourAPI 데이터를 쓰고, 비워두면 샘플 데이터로
+동작합니다 (자세한 내용은 [`src/lib/open-api/README.md`](./src/lib/open-api/README.md)).
 
 ```bash
 cp .env.example .env.local
@@ -49,7 +51,7 @@ src/
 ## 로드맵
 
 - [x] 추천 엔진 뼈대 설계 (필터링 기준: 동반 유형 + 반경) - `src/lib/recommend.ts`, `/api/recommendations`, `/plan` 페이지
-- [ ] 관광지·펫프렌들리 업소 오픈API 연동 (현재는 `src/data/spots.sample.ts` 샘플 데이터)
+- [x] 관광지·펫프렌들리 업소 오픈API 연동 (TourAPI, 키 없으면 샘플 데이터로 폴백) - `src/lib/open-api/tour-api.ts`
 - [ ] 캘린더 연동 (일정 등록/공유)
 - [ ] 위치기반 스탬프 & 리워드 로직
 - [ ] NH 계열사 연계 항목 검토

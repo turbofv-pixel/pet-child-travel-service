@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { CompanionType } from "@/types";
-import { recommendSpots } from "@/lib/recommend";
+import { recommendSpotsWithFallback } from "@/lib/recommend";
 
 const VALID_COMPANION_TYPES: CompanionType[] = ["pet", "child"];
 
@@ -53,12 +53,12 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const spots = recommendSpots({
+  const result = await recommendSpotsWithFallback({
     companionType,
     location: { lat: latNum, lng: lngNum },
     radiusKm,
     date,
   });
 
-  return NextResponse.json({ spots });
+  return NextResponse.json(result);
 }

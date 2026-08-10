@@ -21,6 +21,8 @@ export default function PlanPage() {
   const [locationIndex, setLocationIndex] = useState(0);
   const [radiusKm, setRadiusKm] = useState(50);
   const [spots, setSpots] = useState<RecommendedSpot[] | null>(null);
+  const [source, setSource] = useState<"live" | "sample" | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,9 +49,13 @@ export default function PlanPage() {
 
       const body = await response.json();
       setSpots(body.spots);
+      setSource(body.source);
+      setWarning(body.warning ?? null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "알 수 없는 오류가 발생했어요.");
       setSpots(null);
+      setSource(null);
+      setWarning(null);
     } finally {
       setIsLoading(false);
     }
@@ -140,9 +146,19 @@ export default function PlanPage() {
 
         {spots && (
           <div className="flex flex-col gap-4">
-            <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
-              추천 결과 ({spots.length}곳)
-            </h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
+                추천 결과 ({spots.length}곳)
+              </h2>
+              <span className="rounded-full bg-black/[.06] px-2 py-0.5 text-xs text-zinc-600 dark:bg-white/[.08] dark:text-zinc-400">
+                {source === "live" ? "🌐 오픈API 실시간" : "🧪 샘플 데이터"}
+              </span>
+            </div>
+            {warning && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                ⚠️ {warning}
+              </p>
+            )}
             {spots.length === 0 ? (
               <p className="text-sm text-zinc-600 dark:text-zinc-400">
                 반경 안에 추천할 곳이 없어요. 검색 반경을 넓혀보세요.
