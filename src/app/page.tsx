@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const features = [
   {
     emoji: "🐾",
@@ -56,6 +58,12 @@ export default function Home() {
             펫프렌들리 업소와 아이와 가볼만한 곳을 기준으로 여행 계획을 추천하고,
             캘린더로 일정을 관리하며 가족·친구와 공유하는 동반여행 서비스예요.
           </p>
+          <Link
+            href="/plan"
+            className="rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+          >
+            여행 계획 추천받기 →
+          </Link>
         </section>
 
         {/* Features */}
