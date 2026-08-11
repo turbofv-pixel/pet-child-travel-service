@@ -56,3 +56,17 @@ export interface Reward {
   description: string;
   claimedAt?: string; // ISO datetime, 미청구 시 undefined
 }
+
+/** 강수 형태 (기상청 PTY 코드 매핑) */
+export type PrecipitationType = "none" | "rain" | "rain-snow" | "snow" | "shower";
+
+/** 특정 위치의 현재 날씨 요약 (기상청 초단기실황 기준) */
+export interface WeatherSummary {
+  /** 관측 기준 시각 (ISO datetime) */
+  observedAt: string;
+  temperatureCelsius: number;
+  humidityPercent: number;
+  precipitationType: PrecipitationType;
+  /** 1시간 강수량 (mm), 강수 없으면 0 */
+  precipitationMm: number;
+}

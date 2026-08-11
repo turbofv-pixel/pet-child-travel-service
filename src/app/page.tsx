@@ -58,12 +58,20 @@ export default function Home() {
             펫프렌들리 업소와 아이와 가볼만한 곳을 기준으로 여행 계획을 추천하고,
             캘린더로 일정을 관리하며 가족·친구와 공유하는 동반여행 서비스예요.
           </p>
-          <Link
-            href="/plan"
-            className="rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
-          >
-            여행 계획 추천받기 →
-          </Link>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/plan"
+              className="rounded-full bg-foreground px-6 py-3 text-sm font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+            >
+              여행 계획 추천받기 →
+            </Link>
+            <Link
+              href="/calendar"
+              className="rounded-full border border-black/[.08] px-6 py-3 text-sm font-medium text-black transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:text-zinc-50 dark:hover:bg-white/[.08]"
+            >
+              📅 내 캘린더 보기
+            </Link>
+          </div>
         </section>
 
         {/* Features */}
