@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { CompanionType, Coordinates, WeatherSummary } from "@/types";
 import type { RecommendedSpot } from "@/lib/recommend";
 import { createTravelPlan } from "@/lib/storage/travel-plans";
-import { kakaoMapDirectionsUrl, kakaoMapViewUrl } from "@/lib/map-links";
+import { googleMapsDirectionsUrl, kakaoMapViewUrl } from "@/lib/map-links";
 
 /**
  * 위치 오픈API(지오코딩) 연동 전까지 쓰는 프리셋 지역입니다.
@@ -311,7 +311,7 @@ export default function PlanPage() {
                               🗺️ 지도에서 보기
                             </a>
                             <a
-                              href={kakaoMapDirectionsUrl(spot)}
+                              href={googleMapsDirectionsUrl(spot)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
