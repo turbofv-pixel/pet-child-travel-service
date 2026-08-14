@@ -8,7 +8,7 @@ import { getTravelPlan } from "@/lib/storage/travel-plans";
 import { addStamp, listStamps } from "@/lib/storage/stamps";
 import { claimReward, listRewards } from "@/lib/storage/rewards";
 import { haversineDistanceKm } from "@/lib/geo";
-import { googleMapsDirectionsUrl, kakaoMapViewUrl } from "@/lib/map-links";
+import { SpotActionLinks } from "@/components/SpotActionLinks";
 
 /** 이 정도 거리 이내면 "도착"으로 인정해서 스탬프를 찍어줍니다. */
 const CHECK_IN_RADIUS_KM = 0.5;
@@ -185,34 +185,17 @@ export default function TravelPlanDetailPage() {
                 <span className="text-sm text-zinc-600 dark:text-zinc-400">
                   {spot.address}
                 </span>
-                <div className="mt-1 flex flex-wrap items-center gap-3">
-                  <a
-                    href={kakaoMapViewUrl(spot)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+                <SpotActionLinks spot={spot} />
+                {!stamped && (
+                  <button
+                    type="button"
+                    onClick={() => handleCheckIn(spot)}
+                    disabled={checkInState.status === "checking"}
+                    className="mt-1 w-fit rounded-full bg-foreground px-3 py-1 text-xs font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
                   >
-                    🗺️ 지도에서 보기
-                  </a>
-                  <a
-                    href={googleMapsDirectionsUrl(spot)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
-                  >
-                    🚗 길찾기
-                  </a>
-                  {!stamped && (
-                    <button
-                      type="button"
-                      onClick={() => handleCheckIn(spot)}
-                      disabled={checkInState.status === "checking"}
-                      className="rounded-full bg-foreground px-3 py-1 text-xs font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
-                    >
-                      {checkInState.status === "checking" ? "위치 확인 중..." : "📍 체크인"}
-                    </button>
-                  )}
-                </div>
+                    {checkInState.status === "checking" ? "위치 확인 중..." : "📍 체크인"}
+                  </button>
+                )}
                 {checkInState.status === "too-far" && (
                   <p className="text-xs text-amber-600 dark:text-amber-400">
                     아직 여행지 근처가 아니에요 (약 {checkInState.distanceKm.toFixed(2)}km

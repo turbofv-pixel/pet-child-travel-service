@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { CompanionType, Coordinates, WeatherSummary } from "@/types";
 import type { RecommendedSpot } from "@/lib/recommend";
 import { createTravelPlan } from "@/lib/storage/travel-plans";
-import { googleMapsDirectionsUrl, kakaoMapViewUrl } from "@/lib/map-links";
+import { SpotActionLinks } from "@/components/SpotActionLinks";
 
 /**
  * 위치 오픈API(지오코딩) 연동 전까지 쓰는 프리셋 지역입니다.
@@ -296,29 +296,12 @@ export default function PlanPage() {
                           <span className="text-sm text-zinc-600 dark:text-zinc-400">
                             {spot.address}
                           </span>
-                          <div className="mt-1 flex flex-wrap items-center gap-2">
-                            {spot.hasAudioGuide && (
-                              <span className="w-fit rounded-full bg-black/[.06] px-2 py-0.5 text-xs text-zinc-700 dark:bg-white/[.08] dark:text-zinc-300">
-                                🎧 오디오 가이드
-                              </span>
-                            )}
-                            <a
-                              href={kakaoMapViewUrl(spot)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
-                            >
-                              🗺️ 지도에서 보기
-                            </a>
-                            <a
-                              href={googleMapsDirectionsUrl(spot)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
-                            >
-                              🚗 길찾기
-                            </a>
-                          </div>
+                          {spot.hasAudioGuide && (
+                            <span className="mt-1 w-fit rounded-full bg-black/[.06] px-2 py-0.5 text-xs text-zinc-700 dark:bg-white/[.08] dark:text-zinc-300">
+                              🎧 오디오 가이드
+                            </span>
+                          )}
+                          <SpotActionLinks spot={spot} />
                         </div>
                       </div>
                     </li>

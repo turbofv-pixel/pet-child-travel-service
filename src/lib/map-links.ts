@@ -1,9 +1,9 @@
 import type { Spot } from "@/types";
 
 /**
- * 지도 오픈API(SDK) 연동 전까지 쓰는 딥링크 헬퍼.
- * "지도에서 보기"는 카카오맵으로, "길찾기"는 구글맵으로 보냅니다 - 이유는
- * 아래 kakaoMapDirectionsUrl 주석 참고.
+ * API 키 없이 쓸 수 있는 지도 웹 딥링크 헬퍼.
+ * 네이버지도/티맵처럼 앱 실행이 필요한 것들은 src/lib/open-map-app.ts를 쓰고,
+ * 여기 있는 건 순수 웹 링크(<a href>)로 열어도 되는 것들만 모아뒀습니다.
  */
 
 export function kakaoMapViewUrl(spot: Spot): string {
@@ -12,12 +12,12 @@ export function kakaoMapViewUrl(spot: Spot): string {
 }
 
 /**
- * ⚠️ 길찾기용으로 쓰지 마세요.
- * `map.kakao.com/link/to/...`는 카카오맵 "앱"으로의 딥링크라서, 앱이 설치돼
- * 있지 않은 브라우저(데스크톱, 카카오맵 미설치 폰)에서는 아무 반응이 없거나
- * 앱스토어로만 튕겨서 실제로 길찾기가 안 되는 것처럼 보입니다.
- * 길찾기는 googleMapsDirectionsUrl을 쓰세요 - 구글맵은 앱이 없어도 웹에서
- * 그대로 열립니다.
+ * ⚠️ 카카오 자체 이슈로 안드로이드에서 이 링크가 앱으로 튕겼다가 바로
+ * 닫히는 등 불안정하다는 보고가 많습니다
+ * (https://devtalk.kakao.com/t/topic/141458). 그래서 목적지 이름을 담은
+ * 이 링크는 새 탭(target=_blank)이 아니라 같은 탭에서 바로 이동하도록
+ * 써야 하고, 그래도 안 되면 네이버지도/티맵/구글맵 버튼을 대안으로
+ * 제공합니다.
  */
 export function kakaoMapDirectionsUrl(spot: Spot): string {
   const name = encodeURIComponent(spot.name);
