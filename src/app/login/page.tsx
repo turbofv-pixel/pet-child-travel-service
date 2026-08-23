@@ -36,7 +36,15 @@ export default function LoginPage() {
         router.push("/calendar");
         router.refresh();
       } else {
-        const { error: signUpError } = await supabase.auth.signUp({ email, password });
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          // Supabase 프로젝트의 기본 Site URL이 localhost:3000이라 여기서
+          // 명시적으로 지정하지 않으면 배포 환경에서 가입해도 확인 메일
+          // 링크가 localhost로 가버립니다. (Supabase 대시보드의 Redirect
+          // URLs 허용 목록에도 이 도메인이 등록돼 있어야 실제로 반영돼요.)
+          options: { emailRedirectTo: `${window.location.origin}/login` },
+        });
         if (signUpError) throw signUpError;
         setMessage("가입 확인 이메일을 보냈어요. 메일함(스팸함도)을 확인해주세요.");
       }
