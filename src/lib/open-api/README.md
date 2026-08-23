@@ -5,7 +5,8 @@
 | 관광지 정보 (어린이 동반) | 한국관광공사 TourAPI `KorService2/locationBasedList2` | ✅ `tour-api.ts`에 연동됨 |
 | 펫프렌들리 업소 정보 (반려동물 동반) | 한국관광공사 "반려동물 동반여행 서비스" | ✅ `tour-api.ts`에 연동됨 (엔드포인트 경로는 검증 필요, 아래 참고) |
 | 날씨 | 기상청 단기예보 `getUltraSrtNcst` (초단기실황) | ✅ `weather-api.ts`에 연동됨 |
-| 지도 / 경로 안내 | 카카오맵 웹 딥링크 (`map.kakao.com/link/...`) | ✅ `map-links.ts` (API 키 불필요, SDK 지도 임베드는 미착수) |
+| 지도 / 경로 안내 | 카카오맵 웹 딥링크 + 네이버지도/티맵 앱 딥링크 + 구글맵 | ✅ `map-links.ts`, `open-map-app.ts` |
+| 주소/장소명 검색 (지오코딩) | 카카오 로컬 API → (키 없으면) OSM Nominatim | ✅ `geocode-api.ts`, `/api/geocode` |
 
 API 키는 절대 커밋하지 말고 `.env.local`에 두세요 (`.env.example` 참고).
 
@@ -46,12 +47,22 @@ API 키는 절대 커밋하지 말고 `.env.local`에 두세요 (`.env.example` 
 `map.kakao.com/link/to/...`)로 "지도에서 보기"/"길찾기"를 지원합니다. 지도를 페이지 안에
 직접 그리는 SDK 임베드(카카오맵 JS SDK 등)는 아직 미착수예요.
 
+## 지오코딩 (장소명 → 좌표) 사용법
+
+`/plan`의 위치 검색창은 `/api/geocode`를 호출합니다.
+
+- `KAKAO_REST_API_KEY`가 있으면 카카오 로컬 API로 검색 (정확도 좋음, 카카오맵 JS
+  키와는 다른 "REST API 키"를 써야 해요 - 카카오 개발자 콘솔에서 발급)
+- 없으면 키가 필요 없는 OpenStreetMap Nominatim으로 자동 대체 (정확도는 다소 낮고,
+  초당 요청 제한 등 사용 정책이 있음)
+
 ## 앞으로 할 일
 
 - [x] TourAPI 응답을 `src/types`의 `Spot` 모델로 매핑하는 어댑터 (`toSpot`)
 - [x] 키 없음/호출 실패 시 샘플 데이터로 폴백
 - [x] 기상청 날씨 API 연동 (위경도 → 격자 변환 포함)
-- [x] 지도 딥링크 (지도에서 보기 / 길찾기)
+- [x] 지도 딥링크 (지도에서 보기 / 길찾기 - 카카오·네이버·티맵·구글)
+- [x] 지오코딩 (장소명/주소 검색)
 - [ ] 반려동물 동반여행 서비스 엔드포인트 실제 키로 검증
 - [ ] 상세조회(`detailIntro2` 등) 연동해서 오디오 가이드 보유 여부 등 채우기
 - [ ] 지도 SDK 임베드 (페이지 안에 실제 지도 렌더링)

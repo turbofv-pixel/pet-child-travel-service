@@ -2,22 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { CompanionType, Coordinates, WeatherSummary } from "@/types";
+import type { CompanionType, WeatherSummary } from "@/types";
 import type { RecommendedSpot } from "@/lib/recommend";
 import { createTravelPlan } from "@/lib/storage/travel-plans";
 import { SpotActionLinks } from "@/components/SpotActionLinks";
-
-/**
- * 위치 오픈API(지오코딩) 연동 전까지 쓰는 프리셋 지역입니다.
- * 실제 서비스에서는 주소 검색/현재 위치로 대체될 예정이에요.
- */
-const PRESET_LOCATIONS: { label: string; location: Coordinates }[] = [
-  { label: "서울", location: { lat: 37.5665, lng: 126.978 } },
-  { label: "안산", location: { lat: 37.3219, lng: 126.8309 } },
-  { label: "시흥", location: { lat: 37.3809, lng: 126.7398 } },
-  { label: "용인", location: { lat: 37.3222, lng: 127.098 } },
-  { label: "제주", location: { lat: 33.4996, lng: 126.5312 } },
-];
+import { DEFAULT_LOCATION, LocationPicker, type LocationValue } from "@/components/LocationPicker";
+import { RadiusStepper } from "@/components/RadiusStepper";
 
 const PRECIPITATION_LABEL: Record<WeatherSummary["precipitationType"], string> = {
   none: "강수 없음",
@@ -37,7 +27,7 @@ export default function PlanPage() {
   const router = useRouter();
 
   const [companionType, setCompanionType] = useState<CompanionType>("pet");
-  const [locationIndex, setLocationIndex] = useState(0);
+  const [location, setLocation] = useState<LocationValue>(DEFAULT_LOCATION);
   const [radiusKm, setRadiusKm] = useState(50);
 
   const [spots, setSpots] = useState<RecommendedSpot[] | null>(null);
@@ -71,13 +61,11 @@ export default function PlanPage() {
     setSaveError(null);
     setSelectedSpotIds(new Set());
 
-    const { location } = PRESET_LOCATIONS[locationIndex];
-
     try {
       const params = new URLSearchParams({
         companionType,
-        lat: String(location.lat),
-        lng: String(location.lng),
+        lat: String(location.location.lat),
+        lng: String(location.location.lng),
         radiusKm: String(radiusKm),
       });
 
@@ -104,8 +92,8 @@ export default function PlanPage() {
     // 날씨는 추천 결과와 별개로 실패해도 전체 흐름을 막지 않도록 독립적으로 처리
     try {
       const weatherParams = new URLSearchParams({
-        lat: String(location.lat),
-        lng: String(location.lng),
+        lat: String(location.location.lat),
+        lng: String(location.location.lng),
       });
       const weatherRes = await fetch(`/api/weather?${weatherParams}`);
       const weatherBody = await weatherRes.json();
@@ -191,31 +179,17 @@ export default function PlanPage() {
             </div>
           </fieldset>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            대략적인 위치
-            <select
-              value={locationIndex}
-              onChange={(e) => setLocationIndex(Number(e.target.value))}
-              className="rounded-lg border border-black/[.08] bg-white px-3 py-2 text-sm text-black dark:border-white/[.145] dark:bg-zinc-900 dark:text-zinc-50"
-            >
-              {PRESET_LOCATIONS.map((preset, index) => (
-                <option key={preset.label} value={index}>
-                  {preset.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">위치</span>
+            <LocationPicker value={location} onChange={setLocation} />
+          </div>
 
-          <label className="flex flex-col gap-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-            검색 반경 (km)
-            <input
-              type="number"
-              min={1}
-              value={radiusKm}
-              onChange={(e) => setRadiusKm(Number(e.target.value))}
-              className="rounded-lg border border-black/[.08] bg-white px-3 py-2 text-sm text-black dark:border-white/[.145] dark:bg-zinc-900 dark:text-zinc-50"
-            />
-          </label>
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              검색 반경
+            </span>
+            <RadiusStepper value={radiusKm} onChange={setRadiusKm} />
+          </div>
 
           <button
             type="submit"
@@ -236,7 +210,7 @@ export default function PlanPage() {
               {weather.precipitationType === "none" ? "☀️" : "🌧️"}
             </span>
             <span className="text-zinc-700 dark:text-zinc-300">
-              {PRESET_LOCATIONS[locationIndex].label} 현재 {weather.temperatureCelsius}
+              {location.label} 현재 {weather.temperatureCelsius}
               °C · 습도 {weather.humidityPercent}% ·{" "}
               {PRECIPITATION_LABEL[weather.precipitationType]}
             </span>
