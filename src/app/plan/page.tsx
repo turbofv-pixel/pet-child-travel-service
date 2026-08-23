@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { CompanionType, WeatherSummary } from "@/types";
 import type { RecommendedSpot } from "@/lib/recommend";
-import { createTravelPlan } from "@/lib/storage/travel-plans";
+import { createTravelPlan } from "@/lib/data/travel-plans";
 import { SpotActionLinks } from "@/components/SpotActionLinks";
 import { DEFAULT_LOCATION, LocationPicker, type LocationValue } from "@/components/LocationPicker";
 import { RadiusStepper } from "@/components/RadiusStepper";
@@ -44,6 +44,7 @@ export default function PlanPage() {
   const [startDate, setStartDate] = useState(todayIsoDate());
   const [endDate, setEndDate] = useState(todayIsoDate(1));
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSavingPlan, setIsSavingPlan] = useState(false);
 
   function toggleSpot(id: string) {
     setSelectedSpotIds((prev) => {
@@ -105,7 +106,7 @@ export default function PlanPage() {
     }
   }
 
-  function handleSavePlan() {
+  async function handleSavePlan() {
     setSaveError(null);
 
     if (!spots) return;
@@ -124,15 +125,25 @@ export default function PlanPage() {
       return;
     }
 
-    const plan = createTravelPlan({
-      title: planTitle.trim(),
-      companionType,
-      startDate,
-      endDate,
-      spots: selected,
-    });
-
-    router.push(`/calendar/${plan.id}`);
+    setIsSavingPlan(true);
+    try {
+      const plan = await createTravelPlan({
+        title: planTitle.trim(),
+        companionType,
+        startDate,
+        endDate,
+        spots: selected,
+      });
+      router.push(`/calendar/${plan.id}`);
+    } catch (e) {
+      if (e instanceof Error && e.message === "로그인이 필요해요.") {
+        router.push("/login");
+        return;
+      }
+      setSaveError(e instanceof Error ? e.message : "여행 계획 저장 중 오류가 발생했어요.");
+    } finally {
+      setIsSavingPlan(false);
+    }
   }
 
   return (
@@ -321,9 +332,10 @@ export default function PlanPage() {
                   <button
                     type="button"
                     onClick={handleSavePlan}
-                    className="rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc]"
+                    disabled={isSavingPlan}
+                    className="rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
                   >
-                    📅 여행 계획으로 저장
+                    {isSavingPlan ? "저장 중..." : "📅 여행 계획으로 저장"}
                   </button>
                 </div>
               </>

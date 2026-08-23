@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { TravelPlan } from "@/types";
-import { deleteTravelPlan, listTravelPlans } from "@/lib/storage/travel-plans";
+import { deleteTravelPlan, listTravelPlans } from "@/lib/data/travel-plans";
 
 const COMPANION_LABEL: Record<TravelPlan["companionType"], string> = {
   pet: "🐾 반려동물과",
@@ -29,14 +29,16 @@ export default function CalendarPage() {
 
   useEffect(() => {
     // localStorage는 서버에 없는 외부 저장소라 마운트 후(클라이언트에서만)
-    // 읽어와야 SSR과 하이드레이션 결과가 어긋나지 않습니다.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPlans(listTravelPlans());
+    // 읽어와야 SSR과 하이드레이션 결과가 어긋나지 않습니다. (Supabase 모드일
+    // 땐 로그인 세션도 마운트 후에야 알 수 있어서 동일하게 적용됩니다.)
+    listTravelPlans()
+      .then((loaded) => setPlans(loaded))
+      .catch(() => setPlans([]));
   }, []);
 
-  function handleDelete(id: string) {
-    deleteTravelPlan(id);
-    setPlans(listTravelPlans());
+  async function handleDelete(id: string) {
+    await deleteTravelPlan(id);
+    setPlans(await listTravelPlans());
   }
 
   const { year, month } = cursor;

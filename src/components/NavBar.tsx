@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { AuthStatus } from "./AuthStatus";
 
 const NAV_ITEMS = [
   { href: "/", label: "🏠 홈" },
@@ -24,20 +25,23 @@ export function NavBar() {
 
   return (
     <header className="sticky top-0 z-10 border-b border-black/[.08] bg-zinc-50/90 backdrop-blur dark:border-white/[.145] dark:bg-black/90">
-      <nav className="mx-auto flex w-full max-w-5xl items-center gap-1 px-6 py-3 sm:px-10">
-        {NAV_ITEMS.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
-              isActive(pathname, item.href)
-                ? "bg-foreground text-background"
-                : "text-zinc-600 hover:bg-black/[.06] dark:text-zinc-400 dark:hover:bg-white/[.08]"
-            }`}
-          >
-            {item.label}
-          </Link>
-        ))}
+      <nav className="mx-auto flex w-full max-w-5xl items-center justify-between gap-1 px-6 py-3 sm:px-10">
+        <div className="flex items-center gap-1">
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                isActive(pathname, item.href)
+                  ? "bg-foreground text-background"
+                  : "text-zinc-600 hover:bg-black/[.06] dark:text-zinc-400 dark:hover:bg-white/[.08]"
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+        <AuthStatus />
       </nav>
     </header>
   );

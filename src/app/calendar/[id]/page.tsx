@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import type { Reward, Spot, TravelPlan } from "@/types";
-import { getTravelPlan } from "@/lib/storage/travel-plans";
-import { addStamp, listStamps } from "@/lib/storage/stamps";
-import { claimReward, listRewards } from "@/lib/storage/rewards";
+import { getTravelPlan } from "@/lib/data/travel-plans";
+import { addStamp, listStamps } from "@/lib/data/stamps";
+import { claimReward, listRewards } from "@/lib/data/rewards";
 import { haversineDistanceKm } from "@/lib/geo";
 import { SpotActionLinks } from "@/components/SpotActionLinks";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 /** 이 정도 거리 이내면 "도착"으로 인정해서 스탬프를 찍어줍니다. */
 const CHECK_IN_RADIUS_KM = 0.5;
@@ -35,28 +36,29 @@ export default function TravelPlanDetailPage() {
 
   useEffect(() => {
     // localStorage는 서버에 없는 외부 저장소라 마운트 후(클라이언트에서만)
-    // 읽어와야 SSR과 하이드레이션 결과가 어긋나지 않습니다.
-    const loaded = getTravelPlan(planId) ?? null;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPlan(loaded);
-    if (loaded) {
-      refreshStamps(loaded);
-    }
+    // 읽어와야 SSR과 하이드레이션 결과가 어긋나지 않습니다. (Supabase 모드일
+    // 땐 로그인 세션도 마운트 후에야 알 수 있어서 동일하게 적용됩니다.)
+    getTravelPlan(planId)
+      .then((loaded) => {
+        setPlan(loaded ?? null);
+        if (loaded) return refreshStamps(loaded);
+      })
+      .catch(() => setPlan(null));
   }, [planId]);
 
-  function refreshStamps(currentPlan: TravelPlan) {
-    const stamps = listStamps(currentPlan.id);
+  async function refreshStamps(currentPlan: TravelPlan) {
+    const stamps = await listStamps(currentPlan.id);
     setStampedSpotIds(new Set(stamps.map((s) => s.spotId)));
 
     if (stamps.length === currentPlan.spots.length && currentPlan.spots.length > 0) {
-      const claimed = claimReward(
+      const claimed = await claimReward(
         currentPlan.id,
         "🎉 여행 계획 완주 리워드",
         `"${currentPlan.title}"의 모든 여행지를 다녀왔어요!`,
       );
       setReward(claimed);
     } else {
-      const existing = listRewards(currentPlan.id)[0] ?? null;
+      const existing = (await listRewards(currentPlan.id))[0] ?? null;
       setReward(existing);
     }
   }
@@ -74,16 +76,26 @@ export default function TravelPlanDetailPage() {
     setCheckInStates((prev) => ({ ...prev, [spot.id]: { status: "checking" } }));
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const distanceKm = haversineDistanceKm(
           { lat: position.coords.latitude, lng: position.coords.longitude },
           spot.location,
         );
 
         if (distanceKm <= CHECK_IN_RADIUS_KM) {
-          addStamp(plan.id, spot.id);
-          setCheckInStates((prev) => ({ ...prev, [spot.id]: { status: "idle" } }));
-          refreshStamps(plan);
+          try {
+            await addStamp(plan.id, spot.id);
+            setCheckInStates((prev) => ({ ...prev, [spot.id]: { status: "idle" } }));
+            await refreshStamps(plan);
+          } catch (e) {
+            setCheckInStates((prev) => ({
+              ...prev,
+              [spot.id]: {
+                status: "error",
+                message: e instanceof Error ? e.message : "체크인 저장 중 오류가 발생했어요.",
+              },
+            }));
+          }
         } else {
           setCheckInStates((prev) => ({
             ...prev,
@@ -119,8 +131,9 @@ export default function TravelPlanDetailPage() {
       <div className="flex flex-1 flex-col bg-zinc-50 dark:bg-black">
         <main className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-6 py-16 sm:px-10">
           <p className="text-zinc-600 dark:text-zinc-400">
-            여행 계획을 찾을 수 없어요. 이 기기의 브라우저에만 저장되기 때문에,
-            다른 기기/브라우저에서는 보이지 않을 수 있어요.
+            {isSupabaseConfigured()
+              ? "여행 계획을 찾을 수 없어요. 로그인 상태를 확인해주세요 - 다른 계정으로 만든 계획일 수 있어요."
+              : "여행 계획을 찾을 수 없어요. 이 기기의 브라우저에만 저장되기 때문에, 다른 기기/브라우저에서는 보이지 않을 수 있어요."}
           </p>
           <Link href="/calendar" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
             ← 캘린더로 돌아가기
