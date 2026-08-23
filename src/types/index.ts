@@ -57,6 +57,32 @@ export interface Reward {
   claimedAt?: string; // ISO datetime, 미청구 시 undefined
 }
 
+/** 전자책 카테고리 - 육아/여행 관련 콘텐츠를 묶는 단위 */
+export interface EbookCategory {
+  id: string;
+  name: string;
+  description: string;
+}
+
+/** 전자책 한 챕터 - 여러 문단은 "\n\n"으로 구분해 body에 담음 */
+export interface EbookChapter {
+  title: string;
+  body: string;
+}
+
+/** 전자책 한 권 - 카테고리에 속하며 주차 단위(예: "2026-W34")로 발행 */
+export interface Ebook {
+  id: string;
+  categoryId: string;
+  title: string;
+  author: string;
+  summary: string;
+  /** 발행 주차, ISO 주차 표기 (예: "2026-W34") */
+  week: string;
+  coverEmoji: string;
+  chapters: EbookChapter[];
+}
+
 /** 강수 형태 (기상청 PTY 코드 매핑) */
 export type PrecipitationType = "none" | "rain" | "rain-snow" | "snow" | "shower";
 

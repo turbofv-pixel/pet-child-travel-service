@@ -19,6 +19,7 @@
 - 위치기반 체크인(스탬프) - 브라우저 위치 정보로 여행지 근처(500m 이내)인지
   확인해서 스탬프 적립, 계획을 다 채우면 리워드 지급 (`/calendar/[id]`)
 - (검토 중) NH 계열사 연계 - 올원 모임통장 / 가족 여행 적금 / 반려동물 보험 연결 / 지역 농협·하나로마트 할인쿠폰
+- 카테고리별로 매주 새로운 육아·여행 이야기를 담은 전자책 발행 (`/ebooks`, `/ebooks/[id]`)
 
 ## 기술 스택
 
@@ -49,8 +50,9 @@ cp .env.example .env.local
 
 ```
 src/
-  app/                # Next.js App Router 페이지 (/, /plan, /calendar, /calendar/[id])
-  types/               # 도메인 타입 (TravelPlan, Spot, Stamp, Reward, WeatherSummary ...)
+  app/                # Next.js App Router 페이지 (/, /plan, /calendar, /calendar/[id], /ebooks, /ebooks/[id])
+  types/               # 도메인 타입 (TravelPlan, Spot, Stamp, Reward, WeatherSummary, Ebook ...)
+  data/                # 전자책 등 아직 오픈API/DB가 없는 콘텐츠의 샘플 데이터
   lib/open-api/        # 오픈API 클라이언트 (TourAPI, 기상청)
   lib/storage/          # localStorage 기반 여행 계획/스탬프/리워드 저장소
   lib/recommend.ts      # 추천 엔진 (오픈API ↔ 샘플 데이터 폴백)
@@ -66,6 +68,7 @@ src/
 - [x] 지도 딥링크 (카카오맵 "지도에서 보기" / "길찾기") - `src/lib/map-links.ts`
 - [x] 캘린더 연동 (여행 계획 저장 + 월별 캘린더 뷰) - `/calendar`, `/calendar/[id]`
 - [x] 위치기반 스탬프 & 리워드 로직 (브라우저 Geolocation 기반 체크인) - `/calendar/[id]`
+- [x] 전자책 카테고리 + 주차별 발행 (샘플 데이터 기반) - `src/data/ebooks.sample.ts`, `/ebooks`, `/ebooks/[id]`
 - [ ] 캘린더 공유 (동행자 초대) - 현재 `TravelPlan.companionUserIds`는 항상 빈 배열
 - [ ] 여행 계획/스탬프/리워드를 서버 DB로 이전 (지금은 기기별 localStorage)
 - [ ] 반려동물 동반여행 서비스 엔드포인트 실제 키로 검증
