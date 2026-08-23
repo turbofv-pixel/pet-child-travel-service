@@ -1,5 +1,6 @@
 import type { CompanionType, Spot } from "@/types";
 import { normalizeServiceKey } from "./service-key";
+import { extractGatewayErrorMessage } from "./gateway-error";
 
 /**
  * 한국관광공사 TourAPI 연동.
@@ -93,23 +94,43 @@ async function callTourApi(url: string): Promise<TourApiRawItem[]> {
     throw new TourApiError("TourAPI 요청 중 네트워크 오류가 발생했어요.");
   }
 
+  const rawBodyText = await res.text().catch(() => "");
+  let parsedBody: unknown;
+  try {
+    parsedBody = rawBodyText ? JSON.parse(rawBodyText) : undefined;
+  } catch {
+    parsedBody = undefined;
+  }
+
+  // data.go.kr은 서비스 미등록/트래픽 초과 같은 "게이트웨이 레벨" 오류를
+  // TourAPI 자체 응답 형식과 다른 별도 형식으로 돌려주는데, 이건 HTTP
+  // 상태코드가 200으로 올 때도 있어서 !res.ok 체크만으로는 못 잡습니다.
+  const gatewayError = extractGatewayErrorMessage(parsedBody);
+  if (gatewayError) {
+    throw new TourApiError(`data.go.kr 게이트웨이 오류: ${gatewayError}`);
+  }
+
   if (!res.ok) {
-    const bodyText = await res.text().catch(() => "");
     throw new TourApiError(
       `TourAPI 요청 실패 (HTTP ${res.status})` +
-        (bodyText ? ` - ${bodyText.slice(0, 300)}` : "") +
+        (rawBodyText ? ` - ${rawBodyText.slice(0, 300)}` : "") +
         (res.status === 400
           ? " (TOUR_API_KEY 값을 다시 확인해보세요 - data.go.kr의 'Decoding' 키를 넣는 걸 권장해요)"
           : ""),
     );
   }
 
-  let body: TourApiResponse;
-  try {
-    body = (await res.json()) as TourApiResponse;
-  } catch {
+  if (!parsedBody) {
     throw new TourApiError(
       "TourAPI 응답을 JSON으로 해석하지 못했어요 (serviceKey 오류 등으로 XML 에러 응답이 왔을 수 있어요).",
+    );
+  }
+
+  const body = parsedBody as TourApiResponse;
+
+  if (!body.response?.header) {
+    throw new TourApiError(
+      `TourAPI 응답 형식이 예상과 달라요: ${rawBodyText.slice(0, 300)}`,
     );
   }
 
