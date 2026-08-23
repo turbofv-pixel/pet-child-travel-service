@@ -1,5 +1,6 @@
 import type { PrecipitationType, WeatherSummary } from "@/types";
 import { latLngToKmaGrid } from "./kma-grid";
+import { normalizeServiceKey } from "./service-key";
 
 /**
  * 기상청 단기예보 오픈API - 초단기실황(getUltraSrtNcst) 연동.
@@ -87,7 +88,7 @@ export async function fetchCurrentWeather(
   location: { lat: number; lng: number },
   now: Date = new Date(),
 ): Promise<WeatherSummary> {
-  const serviceKey = requireApiKey();
+  const serviceKey = normalizeServiceKey(requireApiKey());
   const { nx, ny } = latLngToKmaGrid(location.lat, location.lng);
   const { baseDate, baseTime } = resolveBaseDateTime(now);
   const baseUrl = process.env.WEATHER_API_BASE_URL ?? DEFAULT_BASE_URL;
@@ -112,7 +113,14 @@ export async function fetchCurrentWeather(
   }
 
   if (!res.ok) {
-    throw new WeatherApiError(`기상청 API 요청 실패 (HTTP ${res.status})`);
+    const bodyText = await res.text().catch(() => "");
+    throw new WeatherApiError(
+      `기상청 API 요청 실패 (HTTP ${res.status})` +
+        (bodyText ? ` - ${bodyText.slice(0, 300)}` : "") +
+        (res.status === 400
+          ? " (WEATHER_API_KEY 값을 다시 확인해보세요 - data.go.kr의 'Decoding' 키를 넣는 걸 권장해요)"
+          : ""),
+    );
   }
 
   let body: KmaResponse;

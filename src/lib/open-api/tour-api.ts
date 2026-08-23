@@ -1,4 +1,5 @@
 import type { CompanionType, Spot } from "@/types";
+import { normalizeServiceKey } from "./service-key";
 
 /**
  * 한국관광공사 TourAPI 연동.
@@ -71,7 +72,7 @@ function buildUrl(
   endpoint: string,
   params: Record<string, string | number | undefined>,
 ): string {
-  const serviceKey = requireApiKey();
+  const serviceKey = normalizeServiceKey(requireApiKey());
   const searchParams = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params)) {
@@ -80,9 +81,6 @@ function buildUrl(
     }
   }
 
-  // serviceKey는 data.go.kr에서 이미 URL 인코딩된 형태로 발급되는 경우가
-  // 많아서, URLSearchParams로 한 번 더 인코딩하면 깨질 수 있습니다.
-  // 그래서 나머지 파라미터만 인코딩하고 serviceKey는 그대로 이어붙입니다.
   return `${baseUrl}/${endpoint}?${searchParams.toString()}&serviceKey=${serviceKey}`;
 }
 
@@ -96,7 +94,14 @@ async function callTourApi(url: string): Promise<TourApiRawItem[]> {
   }
 
   if (!res.ok) {
-    throw new TourApiError(`TourAPI 요청 실패 (HTTP ${res.status})`);
+    const bodyText = await res.text().catch(() => "");
+    throw new TourApiError(
+      `TourAPI 요청 실패 (HTTP ${res.status})` +
+        (bodyText ? ` - ${bodyText.slice(0, 300)}` : "") +
+        (res.status === 400
+          ? " (TOUR_API_KEY 값을 다시 확인해보세요 - data.go.kr의 'Decoding' 키를 넣는 걸 권장해요)"
+          : ""),
+    );
   }
 
   let body: TourApiResponse;
