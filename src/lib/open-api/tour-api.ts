@@ -18,8 +18,14 @@ import { extractGatewayErrorMessage } from "./gateway-error";
 
 const DEFAULT_BASE_URL = "https://apis.data.go.kr/B551011/KorService2";
 const MOBILE_APP = "PetChildTravelPlanner";
-/** 반려동물 동반 상세조회를 몇 개 후보까지 확인해볼지 (API 호출 수 제한용) */
-const MAX_PET_DETAIL_LOOKUPS = 15;
+/**
+ * 반려동물 동반 상세조회를 몇 개 후보까지 확인해볼지 (API 호출 수 제한용).
+ * 반려동물 동반 정보가 등록된 곳 자체가 전체 관광지 중 일부라서, 후보를
+ * 적게 가져오면(예: 15개) 근처에 하나도 안 걸릴 때가 많아요(반경을 넓혀도
+ * 특정 지역에서만 결과가 나오는 것처럼 보이는 원인). 그래서 넉넉히
+ * 확인합니다.
+ */
+const MAX_PET_DETAIL_LOOKUPS = 40;
 
 /** TourAPI 최대 검색 반경 (미터) */
 const MAX_RADIUS_METERS = 20000;

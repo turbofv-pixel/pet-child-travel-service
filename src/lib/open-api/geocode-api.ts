@@ -110,3 +110,87 @@ export async function geocodeWithFallback(query: string): Promise<GeocodeSearchR
 
   return { results: await geocodeWithNominatim(query), source: "nominatim" };
 }
+
+interface KakaoCoord2AddressResponse {
+  documents: {
+    road_address?: { address_name: string };
+    address?: { address_name: string };
+  }[];
+}
+
+async function reverseGeocodeWithKakao(lat: number, lng: number): Promise<string> {
+  const restApiKey = process.env.KAKAO_REST_API_KEY;
+  if (!restApiKey) {
+    throw new GeocodeApiError("KAKAO_REST_API_KEY가 설정되어 있지 않아요.");
+  }
+
+  const url = `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${lng}&y=${lat}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, { headers: { Authorization: `KakaoAK ${restApiKey}` } });
+  } catch {
+    throw new GeocodeApiError("카카오 로컬 API(역지오코딩) 요청 중 네트워크 오류가 발생했어요.");
+  }
+
+  if (!res.ok) {
+    throw new GeocodeApiError(`카카오 로컬 API(역지오코딩) 요청 실패 (HTTP ${res.status})`);
+  }
+
+  const body = (await res.json()) as KakaoCoord2AddressResponse;
+  const doc = body.documents[0];
+  const address = doc?.road_address?.address_name ?? doc?.address?.address_name;
+
+  if (!address) {
+    throw new GeocodeApiError("이 좌표에 대한 주소를 찾지 못했어요.");
+  }
+  return address;
+}
+
+interface NominatimReverseResponse {
+  display_name: string;
+}
+
+async function reverseGeocodeWithNominatim(lat: number, lng: number): Promise<string> {
+  const url = `https://nominatim.openstreetmap.org/reverse?format=json&accept-language=ko&lat=${lat}&lon=${lng}`;
+
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      headers: { "User-Agent": "pet-child-travel-service (contact: none)" },
+    });
+  } catch {
+    throw new GeocodeApiError("Nominatim(역지오코딩) 요청 중 네트워크 오류가 발생했어요.");
+  }
+
+  if (!res.ok) {
+    throw new GeocodeApiError(`Nominatim(역지오코딩) 요청 실패 (HTTP ${res.status})`);
+  }
+
+  const body = (await res.json()) as NominatimReverseResponse;
+  if (!body.display_name) {
+    throw new GeocodeApiError("이 좌표에 대한 주소를 찾지 못했어요.");
+  }
+  return body.display_name;
+}
+
+export interface ReverseGeocodeResult {
+  address: string;
+  source: "kakao" | "nominatim";
+}
+
+/** 좌표 → 주소 변환 (현재 위치 라벨 표시용). */
+export async function reverseGeocodeWithFallback(
+  lat: number,
+  lng: number,
+): Promise<ReverseGeocodeResult> {
+  if (process.env.KAKAO_REST_API_KEY) {
+    try {
+      return { address: await reverseGeocodeWithKakao(lat, lng), source: "kakao" };
+    } catch {
+      // 카카오 실패 시 Nominatim으로 계속 진행
+    }
+  }
+
+  return { address: await reverseGeocodeWithNominatim(lat, lng), source: "nominatim" };
+}

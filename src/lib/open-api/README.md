@@ -7,6 +7,7 @@
 | 날씨 | 기상청 단기예보 `getUltraSrtNcst` (초단기실황) | ✅ `weather-api.ts`에 연동됨 |
 | 지도 / 경로 안내 | 카카오맵 웹 딥링크 + 네이버지도/티맵 앱 딥링크 + 구글맵 | ✅ `map-links.ts`, `open-map-app.ts` |
 | 주소/장소명 검색 (지오코딩) | 카카오 로컬 API → (키 없으면) OSM Nominatim | ✅ `geocode-api.ts`, `/api/geocode` |
+| 좌표 → 주소 (역지오코딩, 현위치 라벨용) | 카카오 로컬 API → (키 없으면) OSM Nominatim | ✅ `geocode-api.ts`, `/api/reverse-geocode` |
 
 API 키는 절대 커밋하지 말고 `.env.local`에 두세요 (`.env.example` 참고).
 

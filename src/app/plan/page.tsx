@@ -8,6 +8,7 @@ import { createTravelPlan } from "@/lib/data/travel-plans";
 import { SpotActionLinks } from "@/components/SpotActionLinks";
 import { DEFAULT_LOCATION, LocationPicker, type LocationValue } from "@/components/LocationPicker";
 import { RadiusStepper } from "@/components/RadiusStepper";
+import { MapView } from "@/components/MapView";
 
 const PRECIPITATION_LABEL: Record<WeatherSummary["precipitationType"], string> = {
   none: "강수 없음",
@@ -45,6 +46,7 @@ export default function PlanPage() {
   const [endDate, setEndDate] = useState(todayIsoDate(1));
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSavingPlan, setIsSavingPlan] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "map">("list");
 
   function toggleSpot(id: string) {
     setSelectedSpotIds((prev) => {
@@ -252,9 +254,39 @@ export default function PlanPage() {
               </p>
             ) : (
               <>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                      viewMode === "list"
+                        ? "bg-foreground text-background"
+                        : "text-zinc-600 hover:bg-black/[.06] dark:text-zinc-400 dark:hover:bg-white/[.08]"
+                    }`}
+                  >
+                    📋 목록보기
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("map")}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                      viewMode === "map"
+                        ? "bg-foreground text-background"
+                        : "text-zinc-600 hover:bg-black/[.06] dark:text-zinc-400 dark:hover:bg-white/[.08]"
+                    }`}
+                  >
+                    🗺️ 지도보기
+                  </button>
+                </div>
+
+                {viewMode === "map" && (
+                  <MapView center={location.location} centerLabel={location.label} spots={spots} />
+                )}
+
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
                   여행 계획에 담을 곳을 선택해보세요.
                 </p>
+                {viewMode === "list" && (
                 <ul className="flex flex-col gap-3">
                   {spots.map((spot) => (
                     <li
@@ -292,6 +324,7 @@ export default function PlanPage() {
                     </li>
                   ))}
                 </ul>
+                )}
 
                 <div className="flex flex-col gap-4 rounded-xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-zinc-950">
                   <h3 className="text-sm font-semibold text-black dark:text-zinc-50">

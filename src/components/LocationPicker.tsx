@@ -46,6 +46,17 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
+  async function labelForCoordinates(location: Coordinates): Promise<string> {
+    try {
+      const res = await fetch(`/api/reverse-geocode?lat=${location.lat}&lng=${location.lng}`);
+      const body = await res.json();
+      if (res.ok && body.address) return body.address;
+    } catch {
+      // 역지오코딩 실패해도 위치 자체는 이미 얻었으니 아래 기본 라벨로 진행
+    }
+    return "현재 위치";
+  }
+
   function locate() {
     if (!("geolocation" in navigator)) {
       setGeoStatus("unsupported");
@@ -56,10 +67,10 @@ export function LocationPicker({ value, onChange }: LocationPickerProps) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setGeoStatus("idle");
-        onChange({
-          label: "현재 위치",
-          location: { lat: position.coords.latitude, lng: position.coords.longitude },
-        });
+        const location = { lat: position.coords.latitude, lng: position.coords.longitude };
+        // 좌표를 먼저 반영해서 추천은 바로 가능하게 하고, 주소는 뒤이어 채웁니다.
+        onChange({ label: "현재 위치 확인 중...", location });
+        labelForCoordinates(location).then((label) => onChange({ label, location }));
       },
       () => {
         setGeoStatus("denied");

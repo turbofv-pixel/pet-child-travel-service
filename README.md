@@ -11,9 +11,9 @@
 
 ## 핵심 기능
 
-- 위치 입력 - 현재 위치 자동 감지, 장소명/주소 검색, 빠른 프리셋 중 선택
+- 위치 입력 - 현재 위치 자동 감지(역지오코딩으로 실제 주소 표시), 장소명/주소 검색, 빠른 프리셋 중 선택
 - 검색 반경을 5/10/15/20/50/100km 중에서 선택 (±버튼으로도 조절)
-- 위치와 일자를 지정하면 근처 가볼만한 곳을 추천 (`/plan`)
+- 위치와 일자를 지정하면 근처 가볼만한 곳을 추천 (`/plan`), 목록보기/지도보기 전환 가능
 - 추천 지역의 현재 날씨 표시 (기상청 오픈API)
 - 지도에서 보기 / 길찾기 딥링크 (카카오·네이버·티맵·구글)
 - 주요 관광지에 담긴 역사·문화 이야기를 들려주는 오디오 가이드 표시
@@ -72,6 +72,7 @@ src/
   lib/weather.ts          # 날씨 조회 (오픈API ↔ 미제공 폴백)
   lib/map-links.ts         # 지도 웹 딥링크 (카카오맵, 구글맵)
   lib/open-map-app.ts       # 지도 앱 딥링크 (네이버지도, 티맵 - 안드로이드 intent / iOS 스킴)
+  components/MapView.tsx     # 추천 결과 지도보기 (Leaflet + OpenStreetMap, 키 불필요)
 supabase/
   schema.sql             # DB 테이블 + RLS 정책 (Supabase SQL Editor에서 1회 실행)
 ```
@@ -82,12 +83,13 @@ supabase/
 - [x] 관광지·펫프렌들리 업소 오픈API 연동 (TourAPI, 키 없으면 샘플 데이터로 폴백) - `src/lib/open-api/tour-api.ts`
 - [x] 날씨 오픈API 연동 (기상청 초단기실황, 키 없으면 표시 생략) - `src/lib/open-api/weather-api.ts`
 - [x] 지도 딥링크 (카카오·네이버·티맵·구글) - `src/lib/map-links.ts`, `src/lib/open-map-app.ts`
-- [x] 위치 검색/현위치 감지 + 반경 프리셋 - `src/components/LocationPicker.tsx`, `RadiusStepper.tsx`, `/api/geocode`
+- [x] 위치 검색/현위치 감지(역지오코딩 포함) + 반경 프리셋 - `src/components/LocationPicker.tsx`, `RadiusStepper.tsx`, `/api/geocode`, `/api/reverse-geocode`
+- [x] 추천 결과 목록보기/지도보기 전환 - `src/components/MapView.tsx` (Leaflet, API 키 불필요)
 - [x] 캘린더 연동 (여행 계획 저장 + 월별 캘린더 뷰) - `/calendar`, `/calendar/[id]`
 - [x] 위치기반 스탬프 & 리워드 로직 (브라우저 Geolocation 기반 체크인) - `/calendar/[id]`
 - [x] 로그인(이메일/비밀번호) + DB 저장 (Supabase) - `/login`, `src/lib/supabase/`, `src/lib/data/`
 - [ ] 캘린더 공유 (동행자 초대) - 현재 `TravelPlan.companionUserIds`는 항상 빈 배열
-- [ ] 반려동물 동반여행 서비스 엔드포인트 실제 키로 검증
+- [ ] `detailPetTour2` 응답 필드(반려동물 크기 제한 등)를 실제로 파싱해서 활용
 - [ ] NH 계열사 연계 항목 검토
 
 관련 기획 배경은 블로그 글에도 정리해두었습니다:
