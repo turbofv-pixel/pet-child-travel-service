@@ -3,7 +3,7 @@
 | 목적 | API | 상태 |
 | --- | --- | --- |
 | 관광지 정보 (어린이 동반) | 한국관광공사 TourAPI `KorService2/locationBasedList2` | ✅ `tour-api.ts`에 연동됨 |
-| 펫프렌들리 업소 정보 (반려동물 동반) | 한국관광공사 "반려동물 동반여행 서비스" | ✅ `tour-api.ts`에 연동됨 (엔드포인트 경로는 검증 필요, 아래 참고) |
+| 펫프렌들리 업소 정보 (반려동물 동반) | 한국관광공사 TourAPI `KorService2/detailPetTour2` (상세조회) | ✅ `tour-api.ts`에 연동됨 (아래 참고 - 별도 상품이 아님) |
 | 날씨 | 기상청 단기예보 `getUltraSrtNcst` (초단기실황) | ✅ `weather-api.ts`에 연동됨 |
 | 지도 / 경로 안내 | 카카오맵 웹 딥링크 + 네이버지도/티맵 앱 딥링크 + 구글맵 | ✅ `map-links.ts`, `open-map-app.ts` |
 | 주소/장소명 검색 (지오코딩) | 카카오 로컬 API → (키 없으면) OSM Nominatim | ✅ `geocode-api.ts`, `/api/geocode` |
@@ -21,12 +21,24 @@ API 키는 절대 커밋하지 말고 `.env.local`에 두세요 (`.env.example` 
 `/api/recommendations` 응답의 `source` 필드로 `"live"`/`"sample"` 여부를 확인할 수 있고,
 `/plan` 페이지에도 뱃지로 표시됩니다.
 
-### ⚠️ 반려동물 동반여행 서비스 엔드포인트 검증 필요
+### 반려동물 동반 추천은 어떻게 동작하나요
 
-`fetchNearbyPetFriendlySpots()`가 호출하는 `KorPetTourService1/locationBasedList1`은
-공개 문서를 참고한 최선의 추정 경로입니다. data.go.kr에서 실제 활용신청한 서비스의
-활용가이드 문서를 열어서 정확한 base URL/엔드포인트 이름을 확인하고, 다르면
-`.env.local`의 `TOUR_PET_API_BASE_URL`로 덮어써주세요.
+처음엔 "반려동물 동반여행 서비스"라는 별도 API 상품이 있다고 가정하고 만들었는데,
+실제로 신청해보니 그런 상품 자체가 없었어요 (`NO_OPENAPI_SERVICE_ERROR`). TourAPI는
+반려동물 동반 정보를 별도 검색 엔드포인트가 아니라, 이미 활용신청한 **같은
+KorService2 안의 상세조회 오퍼레이션(`detailPetTour2`)**으로 `contentId`별로 제공합니다.
+
+그래서 `fetchNearbyPetFriendlySpots()`는:
+
+1. 일반 위치기반 조회(`locationBasedList2`)로 주변 후보를 가져오고
+2. 후보마다(최대 `MAX_PET_DETAIL_LOOKUPS`개) `detailPetTour2`를 호출해서 반려동물
+   동반 상세정보가 등록돼 있는지 확인하고
+3. 정보가 있는 곳만 추천 결과에 포함시킵니다.
+
+후보 수만큼 상세조회 API를 추가로 호출하는 구조라, 반경/후보 수가 늘어나면 응답이
+느려질 수 있어요. `detailPetTour2` 응답 필드 구조(반려동물 크기 제한 등 세부 정보)는
+아직 안 읽고 "정보 존재 여부"만 보는데, 이후 상세 조건까지 반영하려면 실제 응답을
+보고 필드를 확인해서 다듬어야 해요.
 
 ## 기상청 날씨 API 사용법
 
@@ -63,7 +75,8 @@ API 키는 절대 커밋하지 말고 `.env.local`에 두세요 (`.env.example` 
 - [x] 기상청 날씨 API 연동 (위경도 → 격자 변환 포함)
 - [x] 지도 딥링크 (지도에서 보기 / 길찾기 - 카카오·네이버·티맵·구글)
 - [x] 지오코딩 (장소명/주소 검색)
-- [ ] 반려동물 동반여행 서비스 엔드포인트 실제 키로 검증
+- [x] 반려동물 동반 정보 연동 (`detailPetTour2` 상세조회 기반으로 수정)
+- [ ] `detailPetTour2` 응답 필드(반려동물 크기 제한 등)를 실제로 파싱해서 활용
 - [ ] 상세조회(`detailIntro2` 등) 연동해서 오디오 가이드 보유 여부 등 채우기
 - [ ] 지도 SDK 임베드 (페이지 안에 실제 지도 렌더링)
 - [ ] 요청 실패/레이트리밋 처리 공통 유틸, 응답 캐싱 정책 다듬기

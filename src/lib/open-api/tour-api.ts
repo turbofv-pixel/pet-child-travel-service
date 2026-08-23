@@ -8,17 +8,18 @@ import { extractGatewayErrorMessage } from "./gateway-error";
  * - 어린이 동반 추천: KorService2 `locationBasedList2` (국문 관광정보 서비스,
  *   data.go.kr에서 흔히 쓰이는 안정적인 엔드포인트)
  *   https://www.data.go.kr/data/15101578/openapi.do
- * - 반려동물 동반 추천: "반려동물 동반여행 서비스"
- *   data.go.kr에서 별도로 활용신청해야 하는 서비스라, 엔드포인트 이름/버전이
- *   문서 개편에 따라 바뀔 수 있어요. 아래 DEFAULT_PET_BASE_URL은 문서 기준
- *   최선의 추정값이니, 실제로 신청한 서비스의 활용가이드에서 정확한 경로를
- *   확인하고 다르면 TOUR_PET_API_BASE_URL 환경변수로 덮어써주세요.
+ * - 반려동물 동반 추천: 처음엔 "반려동물 동반여행 서비스"라는 별도
+ *   상품(KorPetTourService)이 있는 줄 알고 그쪽으로 만들었는데, 실제로는
+ *   그런 별도 서비스가 없고(NO_OPENAPI_SERVICE_ERROR) - 반려동물 동반 정보는
+ *   같은 KorService2 안의 상세조회 오퍼레이션(`detailPetTour2`)으로
+ *   contentId별로 조회하는 방식이었습니다. 그래서 일반 위치기반 조회로 후보를
+ *   가져온 뒤, 각 후보의 반려동물 동반 상세정보가 존재하는지로 필터링합니다.
  */
 
 const DEFAULT_BASE_URL = "https://apis.data.go.kr/B551011/KorService2";
-const DEFAULT_PET_BASE_URL =
-  "https://apis.data.go.kr/B551011/KorPetTourService1";
 const MOBILE_APP = "PetChildTravelPlanner";
+/** 반려동물 동반 상세조회를 몇 개 후보까지 확인해볼지 (API 호출 수 제한용) */
+const MAX_PET_DETAIL_LOOKUPS = 15;
 
 /** TourAPI 최대 검색 반경 (미터) */
 const MAX_RADIUS_METERS = 20000;
@@ -165,10 +166,10 @@ function toSpot(
   };
 }
 
-/** 어린이 동반 여행 추천용 - 일반 관광정보 위치기반 조회 */
-export async function fetchNearbyTourSpots(
+/** 위치기반 관광정보 후보 목록 조회 (어린이/반려동물 공통으로 재사용) */
+async function fetchNearbyCandidates(
   options: FetchNearbySpotsOptions,
-): Promise<Spot[]> {
+): Promise<TourApiRawItem[]> {
   const baseUrl = process.env.TOUR_API_BASE_URL ?? DEFAULT_BASE_URL;
   const url = buildUrl(baseUrl, "locationBasedList2", {
     numOfRows: options.numOfRows ?? 20,
@@ -176,7 +177,6 @@ export async function fetchNearbyTourSpots(
     MobileOS: "ETC",
     MobileApp: MOBILE_APP,
     _type: "json",
-    listYN: "Y",
     arrange: "E", // 거리순
     mapX: options.lng,
     mapY: options.lat,
@@ -184,35 +184,63 @@ export async function fetchNearbyTourSpots(
     contentTypeId: options.contentTypeId,
   });
 
-  const items = await callTourApi(url);
+  return callTourApi(url);
+}
+
+/** 어린이 동반 여행 추천용 - 일반 관광정보 위치기반 조회 */
+export async function fetchNearbyTourSpots(
+  options: FetchNearbySpotsOptions,
+): Promise<Spot[]> {
+  const items = await fetchNearbyCandidates(options);
   return items
     .map((item) => toSpot(item, "child"))
     .filter((spot): spot is Spot => spot !== null);
 }
 
+/** contentId에 반려동물 동반 상세정보가 등록돼 있는지 확인 (없으면 false). */
+async function hasPetAccompanyInfo(contentId: string): Promise<boolean> {
+  const baseUrl = process.env.TOUR_API_BASE_URL ?? DEFAULT_BASE_URL;
+  const url = buildUrl(baseUrl, "detailPetTour2", {
+    contentId,
+    MobileOS: "ETC",
+    MobileApp: MOBILE_APP,
+    _type: "json",
+  });
+
+  try {
+    const items = await callTourApi(url);
+    return items.length > 0;
+  } catch {
+    // 이 contentId에 반려동물 정보가 없는 경우도 NODATA_ERROR 등으로 오는데,
+    // 후보 하나하나가 실패했다고 전체 추천을 실패시킬 필요는 없어서
+    // "반려동물 동반 가능 정보 없음"으로 조용히 취급합니다.
+    return false;
+  }
+}
+
 /**
- * 반려동물 동반 여행 추천용 - 반려동물 동반여행 서비스.
- * 엔드포인트 경로는 실제 신청한 서비스의 활용가이드로 검증해주세요
- * (다르면 TOUR_PET_API_BASE_URL로 덮어쓸 수 있어요).
+ * 반려동물 동반 여행 추천용.
+ *
+ * TourAPI에는 반려동물 전용 위치기반 검색 API가 따로 없고, 일반 위치기반
+ * 조회로 후보를 가져온 뒤 각 후보의 반려동물 동반 상세정보(`detailPetTour2`)
+ * 존재 여부로 필터링해야 합니다. 후보가 많으면 상세조회 호출도 그만큼
+ * 늘어나서, MAX_PET_DETAIL_LOOKUPS개까지만 확인합니다.
  */
 export async function fetchNearbyPetFriendlySpots(
   options: FetchNearbySpotsOptions,
 ): Promise<Spot[]> {
-  const baseUrl = process.env.TOUR_PET_API_BASE_URL ?? DEFAULT_PET_BASE_URL;
-  const url = buildUrl(baseUrl, "locationBasedList1", {
-    numOfRows: options.numOfRows ?? 20,
-    pageNo: 1,
-    MobileOS: "ETC",
-    MobileApp: MOBILE_APP,
-    _type: "json",
-    arrange: "E",
-    mapX: options.lng,
-    mapY: options.lat,
-    radius: Math.min(options.radiusMeters ?? MAX_RADIUS_METERS, MAX_RADIUS_METERS),
+  const candidates = await fetchNearbyCandidates({
+    ...options,
+    numOfRows: options.numOfRows ?? MAX_PET_DETAIL_LOOKUPS,
   });
+  const toCheck = candidates.slice(0, MAX_PET_DETAIL_LOOKUPS);
 
-  const items = await callTourApi(url);
-  return items
+  const petFriendlyFlags = await Promise.all(
+    toCheck.map((item) => hasPetAccompanyInfo(item.contentid)),
+  );
+
+  return toCheck
+    .filter((_, index) => petFriendlyFlags[index])
     .map((item) => toSpot(item, "pet"))
     .filter((spot): spot is Spot => spot !== null);
 }
