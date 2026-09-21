@@ -6,6 +6,7 @@ import {
   fetchNearbyPetFriendlySpots,
   fetchNearbyTourSpots,
 } from "./open-api/tour-api";
+import { fetchPetFriendlyPlacesFromKakao } from "./open-api/kakao-places";
 
 export interface RecommendationQuery {
   companionType: CompanionType;
@@ -64,6 +65,11 @@ export function recommendSpots(
   return withDistanceSorted(filtered, query.location, radiusKm);
 }
 
+/** 두 스팟이 사실상 같은 곳인지 (100m 이내면 중복으로 취급) */
+function isNearDuplicate(a: Spot, b: Spot): boolean {
+  return haversineDistanceKm(a.location, b.location) < 0.1;
+}
+
 /** TourAPI를 직접 호출하는 추천. TOUR_API_KEY가 없으면 TourApiError를 던집니다. */
 async function recommendSpotsLive(
   query: RecommendationQuery,
@@ -76,10 +82,33 @@ async function recommendSpotsLive(
     radiusMeters,
   };
 
-  const liveSpots =
-    query.companionType === "pet"
-      ? await fetchNearbyPetFriendlySpots(options)
-      : await fetchNearbyTourSpots(options);
+  let liveSpots: Spot[];
+
+  if (query.companionType === "pet") {
+    const [tourApiResult, kakaoSpots] = await Promise.all([
+      fetchNearbyPetFriendlySpots(options).catch((error) => ({ error })),
+      fetchPetFriendlyPlacesFromKakao(options.lat, options.lng, radiusMeters),
+    ]);
+
+    const tourApiSpots = Array.isArray(tourApiResult) ? tourApiResult : [];
+
+    // TourAPI 호출 자체가 실패해도 카카오 쪽에서 뭔가 찾았으면 그걸로
+    // 진행합니다 (완전히 비어있을 때만 원래 오류를 그대로 던져서 표준
+    // 샘플 데이터 폴백 + 경고 메시지 흐름을 타게 함).
+    if (!Array.isArray(tourApiResult) && kakaoSpots.length === 0) {
+      throw tourApiResult.error;
+    }
+
+    // TourAPI 결과를 우선 유지하고, 카카오 결과 중 이미 있는 곳과 겹치지
+    // 않는 것만 추가해서 후보를 넓힙니다 (카카오는 KAKAO_REST_API_KEY 없으면
+    // 빈 배열이라, 이 경우 그냥 TourAPI 결과만 남습니다).
+    const newFromKakao = kakaoSpots.filter(
+      (kakaoSpot) => !tourApiSpots.some((tourSpot) => isNearDuplicate(tourSpot, kakaoSpot)),
+    );
+    liveSpots = [...tourApiSpots, ...newFromKakao];
+  } else {
+    liveSpots = await fetchNearbyTourSpots(options);
+  }
 
   return withDistanceSorted(liveSpots, query.location, radiusKm);
 }

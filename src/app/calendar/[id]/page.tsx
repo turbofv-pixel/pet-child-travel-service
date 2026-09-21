@@ -158,13 +158,13 @@ export default function TravelPlanDetailPage() {
           </p>
         </div>
 
-        <div className="rounded-xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-zinc-950">
+        <div className="rounded-xl border border-black/[.06] bg-white p-4 shadow-sm dark:border-white/[.08] dark:bg-zinc-950">
           <p className="text-sm text-zinc-700 dark:text-zinc-300">
             🏅 스탬프 {stampedSpotIds.size} / {plan.spots.length}
           </p>
           <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-black/[.06] dark:bg-white/[.08]">
             <div
-              className="h-full rounded-full bg-foreground transition-all"
+              className="h-full rounded-full bg-gradient-to-r from-amber-400 to-orange-500 transition-all"
               style={{
                 width: `${plan.spots.length === 0 ? 0 : (stampedSpotIds.size / plan.spots.length) * 100}%`,
               }}
@@ -173,7 +173,7 @@ export default function TravelPlanDetailPage() {
         </div>
 
         {reward && (
-          <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/40">
+          <div className="rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 p-4 shadow-sm dark:border-amber-800 dark:from-amber-950/40 dark:to-orange-950/40">
             <p className="font-medium text-amber-800 dark:text-amber-300">{reward.title}</p>
             <p className="text-sm text-amber-700 dark:text-amber-400">{reward.description}</p>
           </div>
@@ -187,7 +187,13 @@ export default function TravelPlanDetailPage() {
             return (
               <li
                 key={spot.id}
-                className="flex flex-col gap-2 rounded-xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-zinc-950"
+                className={`flex flex-col gap-2 rounded-xl border-l-4 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:bg-zinc-950 ${
+                  stamped
+                    ? "border-l-emerald-400"
+                    : spot.companionType === "pet"
+                      ? "border-l-amber-400"
+                      : "border-l-sky-400"
+                }`}
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium text-black dark:text-zinc-50">
@@ -204,7 +210,7 @@ export default function TravelPlanDetailPage() {
                     type="button"
                     onClick={() => handleCheckIn(spot)}
                     disabled={checkInState.status === "checking"}
-                    className="mt-1 w-fit rounded-full bg-foreground px-3 py-1 text-xs font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+                    className="mt-1 w-fit rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition-transform hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
                   >
                     {checkInState.status === "checking" ? "위치 확인 중..." : "📍 체크인"}
                   </button>

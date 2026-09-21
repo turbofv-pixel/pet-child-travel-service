@@ -65,7 +65,7 @@ export default function CalendarPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-black/[.08] bg-white p-6 dark:border-white/[.145] dark:bg-zinc-950">
+        <div className="rounded-2xl border border-black/[.06] bg-white p-6 shadow-sm dark:border-white/[.08] dark:bg-zinc-950">
           <div className="mb-4 flex items-center justify-between">
             <button
               type="button"
@@ -114,12 +114,14 @@ export default function CalendarPage() {
                 <div
                   key={iso}
                   className={`flex flex-col items-center gap-0.5 rounded-lg py-2 ${
-                    isToday ? "bg-black/[.06] dark:bg-white/[.08]" : ""
+                    isToday
+                      ? "bg-gradient-to-br from-amber-100 to-sky-100 font-semibold dark:from-amber-500/15 dark:to-sky-500/15"
+                      : ""
                   }`}
                 >
                   <span className="text-black dark:text-zinc-50">{day}</span>
                   {dayPlans.length > 0 && (
-                    <span className="text-[10px] text-blue-600 dark:text-blue-400">
+                    <span className="text-[10px] text-orange-500 dark:text-orange-400">
                       ●
                     </span>
                   )}
@@ -146,7 +148,9 @@ export default function CalendarPage() {
               {plans.map((plan) => (
                 <li
                   key={plan.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-zinc-950"
+                  className={`flex items-center justify-between gap-3 rounded-xl border-l-4 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:bg-zinc-950 ${
+                    plan.companionType === "pet" ? "border-l-amber-400" : "border-l-sky-400"
+                  }`}
                 >
                   <Link href={`/calendar/${plan.id}`} className="flex flex-1 flex-col gap-1">
                     <span className="font-medium text-black dark:text-zinc-50">

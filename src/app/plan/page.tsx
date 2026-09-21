@@ -162,30 +162,44 @@ export default function PlanPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col gap-6 rounded-2xl border border-black/[.08] bg-white p-6 dark:border-white/[.145] dark:bg-zinc-950"
+          className="flex flex-col gap-6 rounded-2xl border border-black/[.06] bg-white p-6 shadow-sm dark:border-white/[.08] dark:bg-zinc-950"
         >
           <fieldset className="flex flex-col gap-3">
             <legend className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
               누구와 함께 가나요?
             </legend>
-            <div className="flex gap-3">
-              <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+            <div className="grid grid-cols-2 gap-3">
+              <label
+                className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all ${
+                  companionType === "pet"
+                    ? "border-amber-400 bg-amber-50 text-amber-800 dark:border-amber-500 dark:bg-amber-500/10 dark:text-amber-300"
+                    : "border-black/[.08] text-zinc-600 hover:bg-black/[.03] dark:border-white/[.145] dark:text-zinc-400 dark:hover:bg-white/[.05]"
+                }`}
+              >
                 <input
                   type="radio"
                   name="companionType"
                   value="pet"
                   checked={companionType === "pet"}
                   onChange={() => setCompanionType("pet")}
+                  className="hidden"
                 />
                 🐾 반려동물과
               </label>
-              <label className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+              <label
+                className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-sm font-medium transition-all ${
+                  companionType === "child"
+                    ? "border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-500 dark:bg-sky-500/10 dark:text-sky-300"
+                    : "border-black/[.08] text-zinc-600 hover:bg-black/[.03] dark:border-white/[.145] dark:text-zinc-400 dark:hover:bg-white/[.05]"
+                }`}
+              >
                 <input
                   type="radio"
                   name="companionType"
                   value="child"
                   checked={companionType === "child"}
                   onChange={() => setCompanionType("child")}
+                  className="hidden"
                 />
                 🧒 아이와
               </label>
@@ -207,9 +221,9 @@ export default function PlanPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+            className="rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-amber-500/20 transition-transform hover:scale-[1.01] hover:shadow-lg hover:shadow-amber-500/30 disabled:opacity-50 disabled:hover:scale-100"
           >
-            {isLoading ? "추천 받는 중..." : "추천받기"}
+            {isLoading ? "추천 받는 중..." : "✨ 추천받기"}
           </button>
         </form>
 
@@ -218,7 +232,7 @@ export default function PlanPage() {
         )}
 
         {weather && (
-          <div className="flex items-center gap-3 rounded-xl border border-black/[.08] bg-white p-4 text-sm dark:border-white/[.145] dark:bg-zinc-950">
+          <div className="flex items-center gap-3 rounded-xl border border-black/[.06] bg-white p-4 text-sm shadow-sm dark:border-white/[.08] dark:bg-zinc-950">
             <span className="text-2xl">
               {weather.precipitationType === "none" ? "☀️" : "🌧️"}
             </span>
@@ -239,7 +253,13 @@ export default function PlanPage() {
               <h2 className="text-xl font-semibold text-black dark:text-zinc-50">
                 추천 결과 ({spots.length}곳)
               </h2>
-              <span className="rounded-full bg-black/[.06] px-2 py-0.5 text-xs text-zinc-600 dark:bg-white/[.08] dark:text-zinc-400">
+              <span
+                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                  source === "live"
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                    : "bg-black/[.06] text-zinc-600 dark:bg-white/[.08] dark:text-zinc-400"
+                }`}
+              >
                 {source === "live" ? "🌐 오픈API 실시간" : "🧪 샘플 데이터"}
               </span>
             </div>
@@ -291,12 +311,16 @@ export default function PlanPage() {
                   {spots.map((spot) => (
                     <li
                       key={spot.id}
-                      className="flex flex-col gap-2 rounded-xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-zinc-950"
+                      className={`flex flex-col gap-2 overflow-hidden rounded-xl border-l-4 bg-white p-4 shadow-sm transition-shadow hover:shadow-md dark:bg-zinc-950 ${
+                        spot.companionType === "pet"
+                          ? "border-l-amber-400"
+                          : "border-l-sky-400"
+                      }`}
                     >
                       <div className="flex items-start gap-3">
                         <input
                           type="checkbox"
-                          className="mt-1"
+                          className="mt-1 h-4 w-4 accent-orange-500"
                           checked={selectedSpotIds.has(spot.id)}
                           onChange={() => toggleSpot(spot.id)}
                           aria-label={`${spot.name} 계획에 담기`}
@@ -306,7 +330,7 @@ export default function PlanPage() {
                             <span className="font-medium text-black dark:text-zinc-50">
                               {spot.name}
                             </span>
-                            <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                            <span className="rounded-full bg-black/[.05] px-2 py-0.5 text-xs font-medium text-zinc-600 dark:bg-white/[.08] dark:text-zinc-400">
                               {spot.distanceKm.toFixed(1)}km
                             </span>
                           </div>
@@ -314,7 +338,7 @@ export default function PlanPage() {
                             {spot.address}
                           </span>
                           {spot.hasAudioGuide && (
-                            <span className="mt-1 w-fit rounded-full bg-black/[.06] px-2 py-0.5 text-xs text-zinc-700 dark:bg-white/[.08] dark:text-zinc-300">
+                            <span className="mt-1 w-fit rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
                               🎧 오디오 가이드
                             </span>
                           )}
@@ -326,7 +350,7 @@ export default function PlanPage() {
                 </ul>
                 )}
 
-                <div className="flex flex-col gap-4 rounded-xl border border-black/[.08] bg-white p-4 dark:border-white/[.145] dark:bg-zinc-950">
+                <div className="flex flex-col gap-4 rounded-xl border border-black/[.06] bg-white p-4 shadow-sm dark:border-white/[.08] dark:bg-zinc-950">
                   <h3 className="text-sm font-semibold text-black dark:text-zinc-50">
                     선택한 {selectedSpotIds.size}곳으로 여행 계획 저장
                   </h3>
@@ -366,7 +390,7 @@ export default function PlanPage() {
                     type="button"
                     onClick={handleSavePlan}
                     disabled={isSavingPlan}
-                    className="rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+                    className="rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-amber-500/20 transition-transform hover:scale-[1.01] hover:shadow-lg hover:shadow-amber-500/30 disabled:opacity-50 disabled:hover:scale-100"
                   >
                     {isSavingPlan ? "저장 중..." : "📅 여행 계획으로 저장"}
                   </button>

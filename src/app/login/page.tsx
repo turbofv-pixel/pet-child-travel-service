@@ -90,7 +90,7 @@ export default function LoginPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-col gap-4 rounded-2xl border border-black/[.08] bg-white p-6 dark:border-white/[.145] dark:bg-zinc-950"
+          className="flex flex-col gap-4 rounded-2xl border border-black/[.06] bg-white p-6 shadow-sm dark:border-white/[.08] dark:bg-zinc-950"
         >
           <label className="flex flex-col gap-1 text-sm font-medium text-zinc-700 dark:text-zinc-300">
             이메일
@@ -122,7 +122,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="rounded-full bg-foreground px-5 py-3 text-sm font-medium text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+            className="rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3 text-sm font-semibold text-white shadow-md shadow-amber-500/20 transition-transform hover:scale-[1.01] hover:shadow-lg hover:shadow-amber-500/30 disabled:opacity-50 disabled:hover:scale-100"
           >
             {isLoading ? "처리 중..." : mode === "signIn" ? "로그인" : "회원가입"}
           </button>

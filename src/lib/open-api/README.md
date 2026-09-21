@@ -3,7 +3,7 @@
 | 목적 | API | 상태 |
 | --- | --- | --- |
 | 관광지 정보 (어린이 동반) | 한국관광공사 TourAPI `KorService2/locationBasedList2` | ✅ `tour-api.ts`에 연동됨 |
-| 펫프렌들리 업소 정보 (반려동물 동반) | 한국관광공사 TourAPI `KorService2/detailPetTour2` (상세조회) | ✅ `tour-api.ts`에 연동됨 (아래 참고 - 별도 상품이 아님) |
+| 펫프렌들리 업소 정보 (반려동물 동반) | 한국관광공사 TourAPI `KorService2/detailPetTour2` (상세조회) + 카카오 로컬 키워드 검색 보강 | ✅ `tour-api.ts`, `kakao-places.ts` (아래 참고 - 별도 상품이 아님) |
 | 날씨 | 기상청 단기예보 `getUltraSrtNcst` (초단기실황) | ✅ `weather-api.ts`에 연동됨 |
 | 지도 / 경로 안내 | 카카오맵 웹 딥링크 + 네이버지도/티맵 앱 딥링크 + 구글맵 | ✅ `map-links.ts`, `open-map-app.ts` |
 | 주소/장소명 검색 (지오코딩) | 카카오 로컬 API → (키 없으면) OSM Nominatim | ✅ `geocode-api.ts`, `/api/geocode` |
@@ -40,6 +40,21 @@ KorService2 안의 상세조회 오퍼레이션(`detailPetTour2`)**으로 `conte
 느려질 수 있어요. `detailPetTour2` 응답 필드 구조(반려동물 크기 제한 등 세부 정보)는
 아직 안 읽고 "정보 존재 여부"만 보는데, 이후 상세 조건까지 반영하려면 실제 응답을
 보고 필드를 확인해서 다듬어야 해요.
+
+### 데이터가 부족할 때 - 카카오 로컬 검색으로 보강
+
+`detailPetTour2`에 등록된 곳은 TourAPI가 큐레이션한 일부뿐이라, 지역에 따라 결과가
+거의 없을 수 있어요. `kakao-places.ts`의 `fetchPetFriendlyPlacesFromKakao()`가
+`KAKAO_REST_API_KEY`로 "애견동반"/"반려동물 동반" 키워드 검색을 같은 반경으로 돌려서
+후보를 넓힙니다 (`recommend.ts`에서 TourAPI 결과와 병합, 100m 이내 중복은 제거).
+카카오 키가 없으면 조용히 빈 배열을 반환해서 기존 동작에 영향이 없어요.
+
+향후 데이터 소스를 더 늘리려면:
+- 지자체별 공공데이터포털에 개별로 등록된 "반려동물 동반가능업소" 데이터셋 (도시마다
+  다른 이름/포맷이라 지역별로 어댑터가 필요할 수 있어요)
+- 네이버 지역검색 API (카카오와 비슷한 키워드 검색, 별도 애플리케이션 등록 필요)
+- Supabase DB에 운영자/사용자가 직접 등록하는 큐레이션 테이블 (API로 못 찾는 곳을
+  수동으로 채워넣는 방식 - `supabase/schema.sql`에 테이블 추가 필요)
 
 ## 기상청 날씨 API 사용법
 
