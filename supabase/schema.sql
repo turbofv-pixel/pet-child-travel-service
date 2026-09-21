@@ -37,8 +37,14 @@ create table if not exists public.rewards (
   travel_plan_id uuid not null references public.travel_plans (id) on delete cascade unique,
   title text not null,
   description text not null,
+  -- 아직 실제 매장에서 쓸 수 있는 코드는 아니에요 (완주 증표 성격) - src/lib/reward-code.ts에서 생성.
+  code text not null default '',
   claimed_at timestamptz not null default now()
 );
+
+-- 이미 만든 테이블에 code 컬럼이 없다면 추가 (기존 스키마를 실행한 적이 있어도
+-- 이 파일을 다시 실행하면 안전하게 따라갑니다).
+alter table public.rewards add column if not exists code text not null default '';
 
 alter table public.travel_plans enable row level security;
 alter table public.stamps enable row level security;

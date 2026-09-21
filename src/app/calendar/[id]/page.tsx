@@ -9,6 +9,7 @@ import { addStamp, listStamps } from "@/lib/data/stamps";
 import { claimReward, listRewards } from "@/lib/data/rewards";
 import { haversineDistanceKm } from "@/lib/geo";
 import { SpotActionLinks } from "@/components/SpotActionLinks";
+import { AudioGuideButton } from "@/components/AudioGuideButton";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 /** 이 정도 거리 이내면 "도착"으로 인정해서 스탬프를 찍어줍니다. */
@@ -173,9 +174,20 @@ export default function TravelPlanDetailPage() {
         </div>
 
         {reward && (
-          <div className="rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 p-4 shadow-sm dark:border-amber-800 dark:from-amber-950/40 dark:to-orange-950/40">
+          <div className="flex flex-col gap-2 rounded-xl border border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50 p-4 shadow-sm dark:border-amber-800 dark:from-amber-950/40 dark:to-orange-950/40">
             <p className="font-medium text-amber-800 dark:text-amber-300">{reward.title}</p>
             <p className="text-sm text-amber-700 dark:text-amber-400">{reward.description}</p>
+            <div className="flex items-center gap-2">
+              <code className="rounded-lg bg-white px-3 py-1.5 text-sm font-mono font-semibold tracking-wider text-amber-900 shadow-sm dark:bg-zinc-900 dark:text-amber-200">
+                {reward.code}
+              </code>
+              <Link
+                href="/rewards"
+                className="text-xs font-medium text-amber-600 hover:underline dark:text-amber-500"
+              >
+                내 리워드 전체 보기 →
+              </Link>
+            </div>
           </div>
         )}
 
@@ -205,6 +217,7 @@ export default function TravelPlanDetailPage() {
                   {spot.address}
                 </span>
                 <SpotActionLinks spot={spot} />
+                <AudioGuideButton spot={spot} />
                 {!stamped && (
                   <button
                     type="button"

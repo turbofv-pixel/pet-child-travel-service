@@ -6,6 +6,7 @@ import type { CompanionType, WeatherSummary } from "@/types";
 import type { RecommendedSpot } from "@/lib/recommend";
 import { createTravelPlan } from "@/lib/data/travel-plans";
 import { SpotActionLinks } from "@/components/SpotActionLinks";
+import { AudioGuideButton } from "@/components/AudioGuideButton";
 import { DEFAULT_LOCATION, LocationPicker, type LocationValue } from "@/components/LocationPicker";
 import { RadiusStepper } from "@/components/RadiusStepper";
 import { MapView } from "@/components/MapView";
@@ -337,12 +338,8 @@ export default function PlanPage() {
                           <span className="text-sm text-zinc-600 dark:text-zinc-400">
                             {spot.address}
                           </span>
-                          {spot.hasAudioGuide && (
-                            <span className="mt-1 w-fit rounded-full bg-violet-100 px-2 py-0.5 text-xs text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-                              🎧 오디오 가이드
-                            </span>
-                          )}
                           <SpotActionLinks spot={spot} />
+                          <AudioGuideButton spot={spot} />
                         </div>
                       </div>
                     </li>

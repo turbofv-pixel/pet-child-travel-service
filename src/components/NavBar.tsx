@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/", label: "🏠 홈" },
   { href: "/plan", label: "✨ 추천받기" },
   { href: "/calendar", label: "📅 캘린더" },
+  { href: "/rewards", label: "🏅 리워드" },
 ];
 
 function isActive(pathname: string, href: string): boolean {

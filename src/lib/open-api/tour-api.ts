@@ -250,3 +250,94 @@ export async function fetchNearbyPetFriendlySpots(
     .map((item) => toSpot(item, "pet"))
     .filter((spot): spot is Spot => spot !== null);
 }
+
+interface DetailCommonRawItem {
+  overview?: string;
+}
+
+interface TourApiDetailResponse {
+  response: {
+    header: { resultCode: string; resultMsg: string };
+    body?: {
+      items?: { item?: DetailCommonRawItem[] | DetailCommonRawItem };
+    };
+  };
+}
+
+/** HTML 태그와 반복 공백을 정리해서 TTS로 읽기 좋은 평문으로 만듭니다. */
+function cleanOverviewText(raw: string): string {
+  return raw
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n{2,}/g, "\n")
+    .trim();
+}
+
+/**
+ * 관광지 소개글(오디오 가이드용 스크립트)을 상세조회로 가져옵니다.
+ * 등록된 소개글이 없으면 null을 반환합니다 (TourAPI 원본이 아닌 스팟
+ * -contentId도 마찬가지로 null).
+ */
+export async function fetchSpotOverview(contentId: string): Promise<string | null> {
+  const baseUrl = process.env.TOUR_API_BASE_URL ?? DEFAULT_BASE_URL;
+  const url = buildUrl(baseUrl, "detailCommon2", {
+    contentId,
+    MobileOS: "ETC",
+    MobileApp: MOBILE_APP,
+    _type: "json",
+    defaultYN: "Y",
+    overviewYN: "Y",
+    firstImageYN: "N",
+    areacodeYN: "N",
+    catcodeYN: "N",
+    addrinfoYN: "N",
+    mapinfoYN: "N",
+  });
+
+  let res: Response;
+  try {
+    res = await fetch(url, { next: { revalidate: 60 * 60 * 24 } });
+  } catch {
+    throw new TourApiError("TourAPI 요청 중 네트워크 오류가 발생했어요.");
+  }
+
+  const rawBodyText = await res.text().catch(() => "");
+  let parsedBody: unknown;
+  try {
+    parsedBody = rawBodyText ? JSON.parse(rawBodyText) : undefined;
+  } catch {
+    parsedBody = undefined;
+  }
+
+  const gatewayError = extractGatewayErrorMessage(parsedBody);
+  if (gatewayError) {
+    throw new TourApiError(`data.go.kr 게이트웨이 오류: ${gatewayError}`);
+  }
+
+  if (!res.ok || !parsedBody) {
+    throw new TourApiError(`TourAPI 요청 실패 (HTTP ${res.status})`);
+  }
+
+  const body = parsedBody as TourApiDetailResponse;
+  if (!body.response?.header) {
+    throw new TourApiError(
+      `TourAPI 응답 형식이 예상과 달라요: ${rawBodyText.slice(0, 300)}`,
+    );
+  }
+
+  const { resultCode, resultMsg } = body.response.header;
+  if (resultCode !== "0000") {
+    // NODATA_ERROR(03) 등 - 이 contentId엔 그냥 소개글이 없는 경우가 대부분
+    if (resultCode === "03") return null;
+    throw new TourApiError(`TourAPI 오류 (${resultCode}): ${resultMsg}`);
+  }
+
+  const rawItem = body.response.body?.items?.item;
+  const item = Array.isArray(rawItem) ? rawItem[0] : rawItem;
+  const overview = item?.overview?.trim();
+
+  if (!overview) return null;
+  return cleanOverviewText(overview);
+}

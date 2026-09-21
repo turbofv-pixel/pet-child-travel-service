@@ -16,12 +16,18 @@
 - 위치와 일자를 지정하면 근처 가볼만한 곳을 추천 (`/plan`), 목록보기/지도보기 전환 가능
 - 추천 지역의 현재 날씨 표시 (기상청 오픈API)
 - 지도에서 보기 / 길찾기 딥링크 (카카오·네이버·티맵·구글)
-- 주요 관광지에 담긴 역사·문화 이야기를 들려주는 오디오 가이드 표시
+- 오디오 가이드 - TourAPI 상세조회(`detailCommon2`)로 가져온 소개글을 브라우저
+  내장 음성합성(Web Speech API)으로 직접 읽어줌 (재생/일시정지/이어듣기, 별도
+  TTS 키 불필요). 소개글이 없는 스팟(카카오/샘플 데이터 원본)은 안내 문구로
+  표시, 음성 재생이 안 되는 기기/브라우저에서는 글로 대체해서 읽을 수 있음
 - 로그인(이메일/비밀번호) - 로그인하면 여행 계획·스탬프·리워드가 기기와 상관없이 계정에 저장됨
 - 추천받은 곳을 골라 여행 계획으로 저장, 캘린더에서 확인 (`/calendar`)
 - 위치기반 체크인(스탬프) - 브라우저 위치 정보로 여행지 근처(500m 이내)인지
   확인해서 스탬프 적립, 계획을 다 채우면 리워드 지급 (`/calendar/[id]`)
-- (검토 중) NH 계열사 연계 - 올원 모임통장 / 가족 여행 적금 / 반려동물 보험 연결 / 지역 농협·하나로마트 할인쿠폰
+- 리워드 코드 + 갤러리 - 리워드를 받으면 `PETRIP-XXXXXX` 형태의 교환 코드가
+  발급되고, `/rewards`에서 지금까지 받은 리워드를 코드 복사 버튼과 함께 한눈에
+  모아볼 수 있음 (제휴처 교환은 검토 중, 코드 발급 구조만 우선 구현)
+- (검토 중) NH 계열사 연계 - 올원 모임통장 / 가족 여행 적금 / 반려동물 보험 연결 / 지역 농협·하나로마트 할인쿠폰 (위 리워드 코드로 교환)
 
 ## 기술 스택
 
@@ -62,9 +68,12 @@ cp .env.example .env.local
 
 ```
 src/
-  app/                 # Next.js App Router 페이지 (/, /plan, /calendar, /calendar/[id], /login)
+  app/                 # Next.js App Router 페이지 (/, /plan, /calendar, /calendar/[id], /login, /rewards)
+  app/api/spot-overview/ # TourAPI 상세조회(detailCommon2) 소개글 조회 API (오디오 가이드용)
   types/                # 도메인 타입 (TravelPlan, Spot, Stamp, Reward, WeatherSummary ...)
   lib/open-api/         # 오픈API 클라이언트 (TourAPI, 기상청, 지오코딩)
+  lib/reward-code.ts     # 리워드 교환 코드 생성 (PETRIP-XXXXXX)
+  components/AudioGuideButton.tsx # 오디오 가이드 재생 버튼 (Web Speech API)
   lib/supabase/          # Supabase 클라이언트(브라우저/서버/미들웨어) + 로그인 상태 훅
   lib/data/               # 여행 계획/스탬프/리워드 - Supabase ↔ localStorage 자동 전환
   lib/storage/            # localStorage 구현체 (lib/data의 폴백 대상)

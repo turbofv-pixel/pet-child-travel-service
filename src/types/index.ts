@@ -54,6 +54,12 @@ export interface Reward {
   travelPlanId: string;
   title: string;
   description: string;
+  /**
+   * 실제로 어딘가에서 교환 가능한 코드는 아직 아니에요 (NH 계열사 연계
+   * 전까지는 "완주 증표" 개념) - 나중에 실제 제휴 리워드로 바꿀 때 이
+   * 필드에 진짜 교환코드를 담으면 돼요.
+   */
+  code: string;
   claimedAt?: string; // ISO datetime, 미청구 시 undefined
 }
 
