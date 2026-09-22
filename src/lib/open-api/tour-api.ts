@@ -167,8 +167,10 @@ function toSpot(
     sourceId: item.contentid,
     address: item.addr1 ?? "",
     location: { lat, lng },
-    // TODO: 상세조회(detailIntro2 등) 연동 시 실제 오디오 가이드 보유 여부로 대체
-    hasAudioGuide: false,
+    // TourAPI 원본 스팟만 detailCommon2로 소개글(오디오 가이드 스크립트)을
+    // 조회할 수 있어요 - 실제로 소개글이 등록돼 있는지는 재생 시점에
+    // /api/spot-overview로 확인합니다 (여기서는 "조회해볼 가치가 있는지"만).
+    hasAudioGuide: true,
   };
 }
 
@@ -193,12 +195,25 @@ async function fetchNearbyCandidates(
   return callTourApi(url);
 }
 
+/**
+ * locationBasedList2는 contentTypeId를 하나만 넘길 수 있어서(관광지만 조회
+ * 등), 여러 타입을 한 번에 받으려면 필터 없이 넉넉히 받아온 뒤 원치 않는
+ * 타입을 클라이언트에서 걸러내는 쪽이 더 간단합니다. 어린이 동반 추천에서
+ * 숙박(32)/쇼핑(38)/음식점(39)까지 같이 나오면 "아이와 갈만한 곳"이라기엔
+ * 목적이 안 맞아서 제외합니다.
+ */
+const CHILD_EXCLUDED_CONTENT_TYPE_IDS = new Set(["32", "38", "39"]);
+
 /** 어린이 동반 여행 추천용 - 일반 관광정보 위치기반 조회 */
 export async function fetchNearbyTourSpots(
   options: FetchNearbySpotsOptions,
 ): Promise<Spot[]> {
-  const items = await fetchNearbyCandidates(options);
+  const items = await fetchNearbyCandidates({
+    ...options,
+    numOfRows: options.numOfRows ?? 40,
+  });
   return items
+    .filter((item) => !CHILD_EXCLUDED_CONTENT_TYPE_IDS.has(item.contenttypeid ?? ""))
     .map((item) => toSpot(item, "child"))
     .filter((spot): spot is Spot => spot !== null);
 }

@@ -8,12 +8,25 @@ type PlaybackState = "idle" | "loading" | "playing" | "paused" | "unavailable" |
 /**
  * 오디오 가이드 - TourAPI 상세조회로 소개글을 가져와서 브라우저 내장
  * 음성합성(Web Speech API)으로 읽어줍니다. 별도 TTS 서비스/키가 필요 없어요.
- *
- * TourAPI 원본이 아닌 스팟(카카오/샘플 데이터)은 소개글이 없어서 눌러보면
- * "이 장소는 오디오 가이드가 없어요"로 안내돼요 - 미리 구분하지 않고
- * 눌렀을 때 조용히 확인합니다.
  */
 export function AudioGuideButton({ spot }: { spot: Spot }) {
+  // 카카오/샘플 데이터 출처 스팟은 TourAPI contentId가 아니라서 소개글을
+  // 조회할 방법 자체가 없어요 (spot.hasAudioGuide는 TourAPI 원본 스팟에만
+  // true). 눌러보고서야 "콘텐츠 없음"을 아는 헛클릭을 없애려고, 애초에
+  // 재생 버튼 대신 안내만 보여줍니다.
+  if (!spot.hasAudioGuide) {
+    return (
+      <p className="w-fit rounded-full bg-black/[.04] px-3 py-1 text-xs text-zinc-400 dark:bg-white/[.06] dark:text-zinc-500">
+        🎧 이 장소는 오디오 가이드가 없어요
+      </p>
+    );
+  }
+
+  return <AudioGuidePlayer spot={spot} />;
+}
+
+/** TourAPI 원본 스팟에서만 쓰이는 실제 재생 UI. */
+function AudioGuidePlayer({ spot }: { spot: Spot }) {
   const [state, setState] = useState<PlaybackState>("idle");
   const [overview, setOverview] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);

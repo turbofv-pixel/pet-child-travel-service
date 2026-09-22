@@ -40,7 +40,7 @@ export const sampleSpots: Spot[] = [
     sourceId: "sample-pet-004",
     address: "제주특별자치도 제주시 명림로 96",
     location: { lat: 33.462, lng: 126.6764 },
-    hasAudioGuide: true,
+    hasAudioGuide: false,
   },
   {
     id: "child-siheung-breathing-playground",
@@ -58,7 +58,7 @@ export const sampleSpots: Spot[] = [
     sourceId: "sample-child-002",
     address: "경기도 안산시 단원구 화랑로 387",
     location: { lat: 37.3219, lng: 126.8309 },
-    hasAudioGuide: true,
+    hasAudioGuide: false,
   },
   {
     id: "child-yongin-suji-eco-park",
@@ -76,6 +76,6 @@ export const sampleSpots: Spot[] = [
     sourceId: "sample-child-004",
     address: "제주특별자치도 서귀포시 안덕면 녹차분재로 218",
     location: { lat: 33.2997, lng: 126.2925 },
-    hasAudioGuide: true,
+    hasAudioGuide: false,
   },
 ];
